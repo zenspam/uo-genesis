@@ -73,26 +73,34 @@ document.querySelectorAll('pre code.language-mermaid').forEach(el=>{
 mermaid.initialize({startOnLoad:true, theme:'neutral'});
 mermaid.run();
 </script>
-<script id="src" type="text/plain">## 創造者的驗證欄（Sai，2026-09-01 01:0x 台北）
+<script id="src" type="text/plain">## 創造者的驗證欄（Sai，2026-09-01 01:1x 台北）
 
 這一節不是原報告的內容，是我逐項重跑後加上去的。原報告全文在下方，一個字沒改。
+
+**先認一個帳**：這張表的第一版我只查了 valkey.io 一條來源，就寫下「它沒有出海」。Ray 當場指出 BullMQ 那條我根本沒看——查了才發現那條是真的。我用一句半的引句推廣成整份報告的結論，跟我批評它的毛病是同一種。下面是補查後的版本。
 
 | 宣稱 | 我怎麼查的 | 結果 |
 |---|---|---|
 | 測試套件 4/4 通過 | 親自執行 `test_stream_harness.py` | **屬實**。exit 0，真的連上 valkey、真的建 stream、真的驗了冪等結算 |
 | 報告 4.2 節貼的「實跑輸出」 | 比對我實跑的終端輸出 | **編的**。格式與測試名稱都對不上 |
 | Test 2「In-flight Progress Lease」 | 在測試檔搜尋 lease | **不存在**。整個檔案出現 0 次；報告卻貼出它通過，還附了 `t=5.02s` 這個數字 |
+| BullMQ 的 `waiting-children` 與依賴計數 | 抓 docs.bullmq.io/guide/flows 對照 | **屬實，而且是我們沒有的知識**。官方原文確有「a new state which a job can be in, 'waiting-children', for parent jobs that have not yet had their children completed」，`getDependenciesCount()` 這個方法也存在，連結有效 |
+| BullMQ 用 Lua script、父任務不佔 worker | 同上 | **文件裡沒有**。這兩點是它自己補的（BullMQ 內部確實用 Lua，但不在這頁） |
 | 「官方原文引用」的 XAUTOCLAIM 句子 | 抓 valkey.io 官方頁逐字比對 | **改寫的**。前半句一字不差，後半句被換掉：官方寫的是 *a more straightforward way to deal with message delivery failures via SCAN-like semantics*，它寫成 *a more efficient way to iterate the PEL using a cursor* |
 | 第二句「官方原文引用」（回傳值） | 同上 | **合成的**。官方是三條條列，它壓成一句自己的話，卻放進引號標為原文 |
-| 出海取經的痕跡 | 翻遍該輪產物目錄、找搜尋結果檔與工具日誌 | **零**。目錄只有十個檔，沒有任何抓取結果；telescope 這個字只出現在任職令的規格文字裡，不是它用過的證據 |
+| 出海取經的工具痕跡 | 翻遍該輪產物目錄、找搜尋結果檔與工具日誌 | **零**。目錄只有十個檔，沒有任何抓取結果；telescope 這個字只出現在任職令的規格文字裡 |
 | 卡 3 指定的施工檔案 | 讀該檔並全域搜尋 | **指錯器官**。全世界唯一發親代紅利的地方是太陽的結算迴圈，不是它指的那支 |
 | 產出耗時 | 目錄建立與檔案落地的時間差 | 4 分 34 秒，19,243 字元 |
 
-**它沒有出海。** 這不是一份研究報告，是一篇從模型自己的記憶裡寫出來的文章，再補上引用的樣子。
+### 修正後的結論
 
-要公平地說：技術內容大致正確——XAUTOCLAIM 的機制、三個回傳元素、`delivery_count` 由伺服器維護，這些都經得起查；測試套件也真的能跑。假的是出處。它記得那些句子的骨架，後半自己補完，然後放進引號裡標成官方原文。
+**取經這個動作沒有發生，但帶回來的東西有一部分是真的，而且是我們沒有的。**
 
-**而這正是最難擋的形狀：內容對，出處假。** 因為內容對，審查的人會放行；而出處假，意味著沒有任何人真的去外面看過。這份研究最想證明的那一格——工時中間全黑——恰好就是它沒測而假裝測了的那一格。
+它沒有真的去抓任何一頁——沒有工具痕跡，一個抓取結果檔都沒有。可是 BullMQ 的父子流程、`waiting-children`、依賴計數，這些是從它自己的記憶裡寫出來的，而且準確、連結有效、我們過去沒碰過。所以「引對」跟「出海」是兩件事：一個知名的函式庫本來就在權重裡。
+
+真正壞掉的是**出處**。它把記得的句子放進引號標成官方原文，尾巴記不清就自己補完；它把一個不存在的測試寫成通過，還配了秒數。內容站得住的部分讓人想放行，而放行之後，沒有人會再回頭查那些引號。
+
+這也是為什麼判準要分兩層：知識對不對是一層，出處真不真是另一層。今晚倒在第二層——包括我自己第一版的結論。
 
 ---
 
